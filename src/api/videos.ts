@@ -55,8 +55,6 @@ export async function handlerUploadVideo(cfg: ApiConfig, req: BunRequest) {
 
   const processedTempPath = await processVideoForFastStart(tempPath)
 
-  await Bun.file(tempPath).delete()
-
   const key = crypto.randomBytes(32).toString('hex')
 
   const filename = `${aspectRatio}/${key}.${extension}`
@@ -68,7 +66,10 @@ export async function handlerUploadVideo(cfg: ApiConfig, req: BunRequest) {
 
   updateVideo(cfg.db, {...metadata, videoURL: url})
 
-  await Bun.file(processedTempPath).delete()
+  await Promise.all([
+    Bun.file(tempPath).delete(),
+    Bun.file(processedTempPath).delete()
+  ])
 
   return respondWithJSON(200, metadata);
 }
